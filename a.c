@@ -1,5 +1,7 @@
-#include<stdio.h>
+#include <stdio.h>
 
-int main(){
-	printf("%s","Second commit");
+int main()
+{
+	printf("%s", "Second commit");
+	printf("%s", "VSCode test");
 }
