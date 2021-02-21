@@ -1,3 +1,6 @@
+# Текстовик с тестом
+*.txt
+
 # Prerequisites
 *.d
 
