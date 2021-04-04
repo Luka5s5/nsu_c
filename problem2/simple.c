@@ -4,6 +4,9 @@
 #define MXRE 64
 #define MXS 1024
 #define MXNUMLEN 10
+
+//Если компилировать сишным компилятором, то надо наверное раскомменитить дефайны
+//(вроде такое можно делать через #ifdef но я за 5 минут не нагуглил и стало лень)
 //#define and &&
 //#define or ||
 //#define bool int
@@ -42,14 +45,39 @@ int b_pow(int a, int n){
 	}
 }
 
+int chars_in_re(char *re, int lre, int rre){
+	int escs=0;
+	int length=rre-lre;
+	for(int i=lre;i<rre;i++)
+		escs+=(re[i]=='\\');
+	return length-escs;
+}
 
 // Наверное, стоило как-то выделить парсер отдельно но тут вроде всё +-просто парсится
-
+// Все кусочки - полуинтервалы [lt, rt), [lre,rre)
 bool is_match(char *t, char *re, int lt, int rt, int lre, int rre){
-	if(lt==rt)
-		return (lre==rre);
 	if(lre>rre)
 		return 0;
+	if(re[lre]=='<'){
+		int left=lre, right=lre;
+		while(re[++right]!='>');
+		int letters=chars_in_re(re,left+1,right);
+		int letters_left=rt-lt;
+		bool pref_matching=1;
+		//printf("Found a * [ %d, %d ]\n",lre,right+1);
+		if(is_match(t,re,lt,rt,right+2,rre)) return 1;
+		for(int step=0;step<letters_left/letters;step++){
+			pref_matching&=is_match(t,re,lt+step*letters,lt+(step+1)*letters,left+1,right);
+			//printf("pref_matching: %d, checked [ %d, %d ]\n",pref_matching,lt+step*letters,lt+(step+1)*letters-1);
+			if(!pref_matching)
+				return 0;
+			if(is_match(t,re,lt+(step+1)*letters,rt,right+2,rre))
+				return 1;
+		}
+		return 0;
+	}
+	if(lt==rt)
+		return (lre==rre);
 	if(re[lre]=='\\'){
 		assert(!(lre+1>=rre));
 		assert(!(re[lre+1]!='d' && re[lre+1]!='D'));
