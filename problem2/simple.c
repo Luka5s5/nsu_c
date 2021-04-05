@@ -1,154 +1,142 @@
 #include <stdio.h>
 #include <assert.h>
+#include <ctype.h>
+#include <string.h>
 
 #define MXRE 64
 #define MXS 1024
 #define MXNUMLEN 10
 
-//Если компилировать сишным компилятором, то надо наверное раскомменитить дефайны
-//(вроде такое можно делать через #ifdef но я за 5 минут не нагуглил и стало лень)
-//#define and &&
-//#define or ||
-//#define bool int
+#define bool int
 
-int pow10[10];
-void fill(){
-	pow10[0]=1;
-	for(int i=1;i<10;i++)
-		pow10[i]=pow10[i-1]*10;
-}
-
-bool is_D(char ch){
-	return ('A'<=ch and ch<='Z') or ('a'<=ch and ch<='z');
-}
-
-bool is_d(char ch){
-	return '0'<=ch and ch<='9';
-}
-
-
-int strlen(char *s){
-	int i=-1;
-	while(s[++i]);
-	return i;
-}
-
-int b_pow(int a, int n){
-	if(n==0) return 1;
-	if(n==1) return a;
-	if(n&1){
-		return(b_pow(a,n-1)*a);
-	}
-	else{
-		int t=b_pow(a,n>>1);
-		return t*t;
-	}
-}
-
-int chars_in_re(char *re, int lre, int rre){
-	int escs=0;
-	int length=rre-lre;
-	for(int i=lre;i<rre;i++)
-		escs+=(re[i]=='\\');
-	return length-escs;
+int chars_in_re(char *re, int lre, int rre)
+{
+	int escs = 0;
+	int length = rre - lre;
+	for (int i = lre; i < rre; i++)
+		escs += (re[i] == '\\');
+	return length - escs;
 }
 
 // Наверное, стоило как-то выделить парсер отдельно но тут вроде всё +-просто парсится
 // Все кусочки - полуинтервалы [lt, rt), [lre,rre)
-bool is_match(char *t, char *re, int lt, int rt, int lre, int rre){
-	if(lre>rre)
+bool is_match(char *t, char *re, int lt, int rt, int lre, int rre)
+{
+	if (lre > rre)
 		return 0;
-	if(re[lre]=='<'){
-		int left=lre, right=lre;
-		while(re[++right]!='>');
-		int letters=chars_in_re(re,left+1,right);
-		int letters_left=rt-lt;
-		bool pref_matching=1;
-		//printf("Found a * [ %d, %d ]\n",lre,right+1);
-		if(is_match(t,re,lt,rt,right+2,rre)) return 1;
-		for(int step=0;step<letters_left/letters;step++){
-			pref_matching&=is_match(t,re,lt+step*letters,lt+(step+1)*letters,left+1,right);
-			//printf("pref_matching: %d, checked [ %d, %d ]\n",pref_matching,lt+step*letters,lt+(step+1)*letters-1);
-			if(!pref_matching)
+	//<...>*
+	if (re[lre] == '<')
+	{
+		int left = lre, right = lre;
+		while (re[++right] != '>')
+			;
+		int letters = chars_in_re(re, left + 1, right);
+		int letters_left = rt - lt;
+		bool pref_matching = 1;
+		if (is_match(t, re, lt, rt, right + 2, rre))
+			return 1;
+		for (int step = 0; step < letters_left / letters; step++)
+		{
+			pref_matching &= is_match(t, re, lt + step * letters, lt + (step + 1) * letters, left + 1, right);
+			if (!pref_matching)
 				return 0;
-			if(is_match(t,re,lt+(step+1)*letters,rt,right+2,rre))
+			if (is_match(t, re, lt + (step + 1) * letters, rt, right + 2, rre))
 				return 1;
 		}
 		return 0;
 	}
-	if(lt==rt)
-		return (lre==rre);
-	if(re[lre]=='\\'){
-		assert(!(lre+1>=rre));
-		assert(!(re[lre+1]!='d' && re[lre+1]!='D'));
 
-		if((re[lre+1]=='d' and !is_d(t[lt])) or (re[lre+1]=='D' and !is_D(t[lt])))
+	// \d \D или просто символ
+
+	while (re[lre] == '\\' || isdigit(re[lre]) || isalpha(re[lre]))
+	{
+		if (lt == rt)
+			return (lre == rre);
+		if (lre > rre)
 			return 0;
-		return is_match(t,re,lt+1,rt,lre+2,rre);
-	}
+		if (re[lre] == '\\')
+		{
+			assert(!(lre + 1 >= rre));
+			assert(!(re[lre + 1] != 'd' && re[lre + 1] != 'D'));
 
-	if(is_d(re[lre]) or is_D(re[lre])){
-		if(re[lre]==t[lt])
-			return is_match(t,re,lt+1,rt,lre+1,rre);
+			if ((re[lre + 1] == 'd' && !isdigit(t[lt])) || (re[lre + 1] == 'D' && !isalpha(t[lt])))
+				return 0;
+			lt += 1;
+			lre += 2;
+		}
 		else
-			return 0;
+		{ //(isdigit(re[lre]) || isalpha(re[lre]))
+			if (re[lre] != t[lt])
+				return 0;
+			lt += 1;
+			lre += 1;
+		}
 	}
+	// за 30 минут не придумал как избавиться от етой копипасты(( вроде как надо действительно после каждой итерации
+	// и после завершения тоже чекать что не закончилось ни выражение, ни строка.
+	if (lt == rt)
+		return (lre == rre);
+	if (lre > rre)
+		return 0;
 
-	if(re[lre]=='~'){
-		if(re[lre+1]!=t[lt]){
-			return is_match(t,re,lt+1,rt,lre+2,rre);
+	// return is_match(t, re, lt, rt, lre, rre);
+	if (re[lre] == '~')
+	{
+		if (re[lre + 1] != t[lt])
+		{
+			return is_match(t, re, lt + 1, rt, lre + 2, rre);
 		}
 		else
 			return 0;
 	}
-	if(re[lre]=='['){
-		int n=0;
-		int last=lre;
-		while(is_d(re[++last]));
-		for(int i=last-1, pw=1; i>lre; i--, pw*=10)
-			n+=pw*(re[i]-'0');
-		int lbracket=last+1;
-		int rbracket=lbracket;
-		int escs=0;
-		while(((escs+=re[rbracket]=='\\') or 1) and (re[++rbracket]!=')'));
-		//printf("found a shit from %d to %d with n=%d\n",lbracket,rbracket,n);
-		int letters=(rbracket-lbracket-1) - escs;
-		bool ans=1;
-		if(rt-lt<letters*n) return 0;
+	if (re[lre] == '[')
+	{
+		int n = 0;
+		int last = lre;
+		while (isdigit(re[++last]))
+			;
+		for (int i = last - 1, pw = 1; i > lre; i--, pw *= 10)
+			n += pw * (re[i] - '0');
+		int lbracket = last + 1;
+		int rbracket = lbracket;
+		int escs = 0;
+		while (re[++rbracket] != ')')
+			escs += (re[rbracket] == '\\');
+		int letters = (rbracket - lbracket - 1) - escs;
+		bool ans = 1;
+		if (rt - lt < letters * n)
+			return 0;
 
-		for(int i=0;i<n;i++){
-			//printf("letters:%d t=[ %d(%c); %d(%c) ], re=[ %d(%c); %d(%c) ] ans is now: ",letters,lt+i*letters,t[lt+i*letters], lt+(i+1)*letters-1,t[lt+(i+1)*letters-1],lbracket+1,re[lbracket+1],rbracket-1,re[rbracket-1]);
-			ans&=is_match(t,re,lt+i*letters,lt+(i+1)*letters,lbracket+1, rbracket);
-			//printf("%d\n",ans);
+		for (int i = 0; i < n; i++)
+		{
+			ans &= is_match(t, re, lt + i * letters, lt + (i + 1) * letters, lbracket + 1, rbracket);
 		}
 
-		if(!ans) return 0;
-		//printf("[] is ok, checking t=[ %d(%c); %d(%c) ], re=[ %d(%c); %d(%c) ]\n", lt+(n)*letters,t[lt+(n)*letters], rt-1,t[rt-1], rbracket+2, re[rbracket+2], rre-1, re[rre-1]);
-		return is_match(t,re,lt+(n)*letters,rt,rbracket+2,rre);
+		if (!ans)
+			return 0;
+		return is_match(t, re, lt + (n)*letters, rt, rbracket + 2, rre);
 	}
 }
 
-int main(){
-	/**/
-	fill();
+int main()
+{
 	char re[MXRE], s[MXS];
-	int t,n,m;
-	scanf("%s",re);
-	n=strlen(re);
-	scanf("%d",&t);
+	int t, n, m;
+	scanf("%s", re);
+	n = strlen(re);
+	scanf("%d", &t);
 
-	bool any=0;
-	for(int i=0;i<t;i++){
-		scanf("%s",s);
-		m=strlen(s);
-		//printf("Parsing %s, num:%d\n",s,i);
-		bool ans=is_match(s,re,0,m,0,n);
-		if(ans)
-			printf("%d ",i);
-		any|=ans;
+	bool any = 0;
+	for (int i = 0; i < t; i++)
+	{
+		scanf("%s", s);
+		m = strlen(s);
+		bool ans = is_match(s, re, 0, m, 0, n);
+		if (ans)
+			printf("%d ", i);
+		any |= ans;
 	}
 
-	if(!any)
+	if (!any)
 		printf("none");
-	/**/
 }
