@@ -66,9 +66,10 @@ void heap_push(long long arr[][2], int n, int i)
 		if (mx != i)
 		{
 			swp(arr, mx, i);
-			i=mx;
+			i = mx;
 		}
-		else{
+		else
+		{
 			return;
 		}
 	}
@@ -90,7 +91,7 @@ int main()
 	int v[N][K][K], n;
 	int sz[N];
 	long long det_ind[N][2];
-	scanf("%lld", &n);
+	scanf("%d", &n);
 	for (int ind = 0; ind < n; ind++)
 	{
 		int k;

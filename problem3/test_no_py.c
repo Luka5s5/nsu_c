@@ -8,6 +8,7 @@
 #define PY 123423
 #define TXT 1739
 #define C 823
+#define MX_LEN 1024
 
 double min(double a, double b)
 {
@@ -50,40 +51,41 @@ int main(int argc, char *argv[])
 	printf("Generating input...\n");
 	if (type == BIN)
 	{
-		char command[1024];
+		char command[MX_LEN];
 		sprintf(command, "./%s > input.txt", gen);
 		system(command);
 	}
 	if (type == C)
 	{
-		char command[1024];
+		char command[MX_LEN];
 		sprintf(command, "g++ %s -o gen; ./gen > input.txt; rm gen;", gen);
 		system(command);
 	}
 	if (type == PY)
 	{
-		char command[1024];
+		char command[MX_LEN];
 		sprintf(command, "python3 %s > input.txt", gen);
 		system(command);
 	}
 	if (type == TXT)
 	{
-		char command[1024];
+		char command[MX_LEN];
 		sprintf(command, "cp %s input.txt", gen);
 		system(command);
 	}
 	printf("Generated input!\n");
 	double *t = (double *)malloc(sizeof(double) * iters);
-	double mean = 0;
 	if (!t)
 		return 'm' + 'l';
+	double mean = 0;
 	for (int i = 0; i < iters; i++)
 	{
 		printf("running test %d...\n", i+1);
-		char command[1024];
+		char command[MX_LEN];
 		sprintf(command, "(/usr/bin/time -f \"%%e\" ./%s < input.txt > output.txt) 2> time.txt", sol);
 		system(command);
 		FILE *t_file = fopen("time.txt", "r");
+		if(!t_file) return 'f'+'e';
 		fscanf(t_file, "%lf", &t[i]);
 		fclose(t_file);
 		mean += t[i];
