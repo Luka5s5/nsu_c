@@ -1,0 +1,17 @@
+s=[]
+while(True):
+    l=input().split()
+    if(len(l)<2):
+        break
+    if(l[0]=='+'):
+        if(s.count(l[1])==0):
+            print('a')
+            s.append(l[1])
+        else:
+            print('na')
+    else:
+        if(s.count(l[1])==0):
+            print('nrm')
+        else:
+            print('rm')
+            s.remove(l[1])

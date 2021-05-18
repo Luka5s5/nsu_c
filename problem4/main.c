@@ -43,6 +43,7 @@ void free_all(node *t)
         return;
     free_all(t->l);
     free_all(t->r);
+    free(t->s);
     free(t);
 }
 
@@ -153,95 +154,65 @@ int sz_O_n(node *t)
     return 1 + sz_O_n(t->l) + sz_O_n(t->r);
 }
 
+char *read_word()
+{
+    char *ret = (char *)malloc(1 * sizeof(char));
+    int sz = 0, mx = 1;
+    char ch = getchar();
+    while (ch != ' ' && ch != '\n')
+    {
+        if (sz >= mx)
+        {
+            mx *= 2;
+            ret = (char *)realloc(ret, mx * sizeof(char));
+            if (!ret)
+                exit(-1);
+                // return -1;
+        }
+        ret[sz++] = ch;
+        ch = getchar();
+    }
+    if (sz >= mx)
+    {
+        mx++;
+        ret = (char *)realloc(ret, mx * sizeof(char));
+        if (!ret)
+            exit(-1);
+            // return -1;
+    }
+    ret[sz++] = '\0';
+    return ret;
+}
+
 int main()
 {
     char trash[TRASH];
     scanf("%s\n", trash);
     node *tree = NULL;
-    char **arr = (char **)malloc(1 * sizeof(char *));
-    int maxarr = 1, arrsz = 0;
-    for (;;)
+    while(1)
     {
-        if (arrsz >= maxarr)
-        {
-            maxarr *= 2;
-            arr = (char **)realloc(arr, maxarr * sizeof(char *));
-            if (!arr)
-                return -1;
-        }
-        arr[arrsz] = (char *)malloc(1 * sizeof(char));
-        int i = arrsz++;
-        int sz = 0, mx = 1;
-        char ch = getchar();
-        while (ch != ' ' && ch != '\n')
-        {
-            if (sz >= mx)
-            {
-                mx *= 2;
-                arr[i] = (char *)realloc(arr[i], mx * sizeof(char));
-                if (!arr[i])
-                    return -1;
-            }
-            arr[i][sz++] = ch;
-            ch = getchar();
-        }
-        if (sz >= mx)
-        {
-            mx++;
-            arr[i] = (char *)realloc(arr[i], mx * sizeof(char));
-            if (!arr[i])
-                return -1;
-        }
-        arr[i][sz++] = '\0';
-        if (strcmp(arr[i], "DELETE:") == 0)
-        {
-            arrsz--;
+        char* s = read_word();
+        if (strcmp(s, "DELETE:") == 0)
             break;
-        }
-        tree = push_node(tree, make_node(arr[i]));
+        tree = push_node(tree, make_node(s));
     }
-    //write(tree);
-    for (;;)
+    // write(tree);
+    while (1)
     {
-        char *word = (char *)malloc(1 * sizeof(char));
-        int wsz = 0, wlen = 1;
-        char ch = getchar();
-        while (ch != '\n')
-        {
-            if (wsz >= wlen)
-            {
-                wlen *= 2;
-                word = (char *)realloc(word, wlen * sizeof(char));
-                if (!word)
-                    return -1;
-            }
-            word[wsz++] = ch;
-            ch = getchar();
-        }
-        if (wsz >= wlen)
-        {
-            wlen += 1;
-            word = (char *)realloc(word, wlen * sizeof(char));
-            if (!word)
-                return -1;
-        }
-        word[wsz] = '\0';
+        char *word = read_word();
         if (strcmp(word, "LEVEL:") == 0)
         {
             free(word);
             break;
         }
         tree = deleteNode(tree, word);
-        //write(tree);
+        write(tree);
         free(word);
     }
     int lv;
     scanf("%d", &lv);
     printf("%d\n", sz_O_n(tree));
     write_level(tree, 1, lv + 1);
-    free_all(tree);
-    for (int i = 0; i <= arrsz; i++)
-        free(arr[i]);
-    free(arr);
     printf("\n");
+    free_all(tree);
 }
