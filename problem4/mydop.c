@@ -37,6 +37,11 @@ int check(node *t, char *s)
 Pair *make_pair(node *f, node *s)
 {
     Pair *ret = (Pair *)malloc(sizeof(Pair));
+    if (!ret)
+    {
+        printf("No memory for a pair\n");
+        exit(0);
+    }
     ret->first = f;
     ret->second = s;
     return ret;
@@ -219,34 +224,44 @@ char *read_word()
 
 int main()
 {
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
     srand(time(NULL));
     char trash[TRASH];
     node *tree = NULL;
-    while(1){
+    while (1)
+    {
         char ch = getchar();
-        if(ch == '+'){
+        if (ch == '+')
+        {
             getchar();
             char *word = read_word();
-            if(check(tree,word)){
+            if (check(tree, word))
+            {
                 printf("na\n");
             }
-            else{
-                tree = insert(tree,make_node(word));
+            else
+            {
+                tree = insert(tree, make_node(word));
                 printf("a\n");
             }
         }
-        else if(ch == '-'){
+        else if (ch == '-')
+        {
             getchar();
             char *word = read_word();
-            if(check(tree,word)){
+            if (check(tree, word))
+            {
                 printf("rm\n");
-                tree = remove_by_s(tree,word);
+                tree = remove_by_s(tree, word);
             }
-            else{
+            else
+            {
                 printf("nrm\n");
             }
         }
-        else{
+        else
+        {
             break;
         }
     }
