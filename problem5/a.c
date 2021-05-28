@@ -217,7 +217,7 @@ node *leftmost(node *t)
 
 //+=+=+=+=+=+ /SET +=+=+=+=+=+=+
 
-pair mp(int a, int b)
+pair make_int_pair(int a, int b)
 {
     pair p;
     p.first = a;
@@ -235,9 +235,11 @@ int main()
     int ans = -INF;
     int mx, n, m;
     scanf("%d %d %d", &mx, &n, &m);
+    //g - граф, задан списком смежности, .first - вес ребра, .second - куда ребро
     pair **g = (pair **)malloc(n * sizeof(pair *));
     if (!g)
         return -1;
+    // .first - сколько выделено памяти .second - текущая длинна
     pair *sz_ind = (pair *)malloc(n * sizeof(pair));
     if (!sz_ind)
         return -1;
@@ -249,6 +251,7 @@ int main()
         sz_ind[i].first = 1;
         sz_ind[i].second = 0;
     }
+    // Сколько деняг в вершине
     int *val = (int *)malloc(n * sizeof(int));
     if (!val)
         return -1;
@@ -276,12 +279,14 @@ int main()
     for (int i = 0; i < n; i++)
         scanf("%d", &val[i]);
     int s = 0;
+    // d[i] - расстояние от стартовой вершины до i-той, p[i] - предок i-той вершины в кратчайшем пути
     int *d = (int *)malloc(n * sizeof(int)), *p = (int *)malloc(n * sizeof(int));
     for (int i = 0; i < n; i++)
         d[i] = INF;
     d[s] = 0;
+    // q - priority_queue
     node *q = NULL;
-    q = insert(q, make_node(mp(d[s], s)));
+    q = insert(q, make_node(make_int_pair(d[s], s)));
     int qsz = 1;
     while (qsz)
     {
@@ -295,12 +300,12 @@ int main()
                 len = g[v][j].first;
             if (d[v] + len < d[to])
             {
-                if (check(q, mp(d[to], to)))
+                if (check(q, make_int_pair(d[to], to)))
                     qsz--;
-                q = remove_by_s(q, mp(d[to], to));
+                q = remove_by_s(q, make_int_pair(d[to], to));
                 d[to] = d[v] + len;
                 p[to] = v;
-                q = insert(q, make_node(mp(d[to], to)));
+                q = insert(q, make_node(make_int_pair(d[to], to)));
                 qsz++;
             }
         }
